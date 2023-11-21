@@ -5,7 +5,7 @@ import pLimit from "p-limit";
 import preferredPM from "preferred-pm";
 import chalk from "chalk";
 import spawn from "spawndamnit";
-import semverParse from "semver/functions/parse";
+import { SemVer, parse as semverParse } from "semver";
 import { askQuestion } from "../../utils/cli-utilities";
 import { isCI } from "ci-info";
 import { TwoFactorState } from "../../utils/types";
@@ -43,8 +43,20 @@ function getCorrectRegistry(packageJson?: PackageJSON): string {
 
 async function getPublishTool(
   cwd: string
-): Promise<{ name: "npm" } | { name: "pnpm"; shouldAddNoGitChecks: boolean }> {
+): Promise<
+  | { name: "npm" }
+  | { name: "pnpm"; shouldAddNoGitChecks: boolean }
+  | { name: "yarn"; version: SemVer | null }
+> {
   const pm = await preferredPM(cwd);
+
+  if (pm && pm.name === "yarn") {
+    let result = await spawn("yarn", ["--version"], { cwd });
+    let version = result.stdout.toString().trim();
+    let parsed = semverParse(version);
+    return { name: "yarn", version: parsed };
+  }
+
   if (!pm || pm.name !== "pnpm") return { name: "npm" };
   try {
     let result = await spawn("pnpm", ["--version"], { cwd });
@@ -182,9 +194,20 @@ async function internalPublish(
   const envOverride = {
     npm_config_registry: getCorrectRegistry(),
   };
+
+  const isYarnBerry =
+    publishTool.name === "yarn" &&
+    publishTool.version &&
+    publishTool.version.major >= 2;
+
   let { code, stdout, stderr } =
     publishTool.name === "pnpm"
       ? await spawn("pnpm", ["publish", "--json", ...publishFlags], {
+          env: Object.assign({}, process.env, envOverride),
+          cwd: opts.cwd,
+        })
+      : isYarnBerry
+      ? await spawn(publishTool.name, ["npm", "publish", ...publishFlags], {
           env: Object.assign({}, process.env, envOverride),
           cwd: opts.cwd,
         })
