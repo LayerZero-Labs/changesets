@@ -64,6 +64,10 @@
       }
     }
   },
+  "scripts": {
+    "prepack": "sed -i'.bak' 's,@changesets/cli\",@layerzerolabs/changesets-cli\",' package.json",
+    "postpack": "sed -i'.bak' 's,@layerzerolabs/changesets-cli\",@changesets/cli\",' package.json && rm package.json.bak"
+  },
   "license": "MIT",
   "dependencies": {
     "@babel/runtime": "^7.20.1",
