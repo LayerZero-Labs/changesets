@@ -81,12 +81,14 @@ export async function run(
       empty,
       ignore,
       snapshot,
+      snapshotPrereleaseTemplate,
       tag,
-      open
+      open,
+      gitTag,
     }: CliOptions = flags;
     const deadFlags = ["updateChangelog", "isPublic", "skipCI", "commit"];
 
-    deadFlags.forEach(flag => {
+    deadFlags.forEach((flag) => {
       if (flags[flag]) {
         error(
           `the flag ${flag} has been removed from changesets for version 2`
@@ -104,7 +106,6 @@ export async function run(
 
     switch (input[0]) {
       case "add": {
-        // @ts-ignore if this is undefined, we have already exited
         await add(cwd, { empty, open }, config);
         return;
       }
@@ -143,7 +144,7 @@ export async function run(
         // Validate that all dependents of ignored packages are listed in the ignore list
         const dependentsGraph = getDependentsGraph(packages, {
           bumpVersionsWithWorkspaceProtocolOnly:
-            config.bumpVersionsWithWorkspaceProtocolOnly
+            config.bumpVersionsWithWorkspaceProtocolOnly,
         });
         for (const ignoredPackage of config.ignore) {
           const dependents = dependentsGraph.get(ignoredPackage) || [];
@@ -162,11 +163,15 @@ export async function run(
           throw new ExitError(1);
         }
 
+        if (snapshotPrereleaseTemplate) {
+          config.snapshot.prereleaseTemplate = snapshotPrereleaseTemplate;
+        }
+
         await version(cwd, { snapshot }, config);
         return;
       }
       case "publish": {
-        await publish(cwd, { otp, tag }, config);
+        await publish(cwd, { otp, tag, gitTag }, config);
         return;
       }
       case "status": {
