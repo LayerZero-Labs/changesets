@@ -55,7 +55,7 @@ async function getPublishTool(
     // Yarn Classic doesn't do anything special when publishing, let's stick to the npm client in such a case
     return {
       name: "npm",
-      version: await getPublishToolVersion("npm", cwd)
+      version: await getPublishToolVersion("npm", cwd),
     };
   }
 
@@ -204,10 +204,10 @@ async function internalPublish(
     publishTool.name === "yarn"
       ? await spawn("yarn", ["npm", "publish", ...publishFlags], {
           cwd: opts.cwd,
-          env: Object.assign({}, process.env, envOverride)
+          env: Object.assign({}, process.env, envOverride),
         })
       : await spawn(publishTool.name, ["publish", opts.cwd, ...publishFlags], {
-          env: Object.assign({}, process.env, envOverride)
+          env: Object.assign({}, process.env, envOverride),
         });
 
   if (code !== 0) {
@@ -220,7 +220,7 @@ async function internalPublish(
         // this filters out "unnamed" logs: https://yarnpkg.com/advanced/error-codes/#yn0000---unnamed
         // this includes a list of packed files and the "summary output" like: "Failed with errors in 0s 75ms"
         // those are not that interesting so we reduce the noise by dropping them
-        .filter(line => !/YN0000:/.test(line))
+        .filter((line) => !/YN0000:/.test(line))
         .join("\n");
       error(`an error occurred while publishing ${pkgName}:`, `\n${output}`);
       return { published: false };
