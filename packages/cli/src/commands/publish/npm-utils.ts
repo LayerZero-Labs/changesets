@@ -1,15 +1,22 @@
 import { ExitError } from "@changesets/errors";
 import { error, info, warn } from "@changesets/logger";
-import { PackageJSON } from "@changesets/types";
+import { AccessType, PackageJSON } from "@changesets/types";
 import pLimit from "p-limit";
 import preferredPM from "preferred-pm";
 import chalk from "chalk";
 import spawn from "spawndamnit";
 import semver from "semver";
 import { askQuestion } from "../../utils/cli-utilities";
-import isCI from "../../utils/isCI";
+import { isCI } from "ci-info";
 import { TwoFactorState } from "../../utils/types";
 import { getLastJsonObjectFromString } from "../../utils/getLastJsonObjectFromString";
+
+interface PublishOptions {
+  cwd: string;
+  publishDir: string;
+  access: AccessType;
+  tag: string;
+}
 
 const npmRequestLimit = pLimit(40);
 const npmPublishLimit = pLimit(10);
@@ -59,11 +66,18 @@ export async function getTokenIsRequired() {
   // Due to a super annoying issue in yarn, we have to manually override this env variable
   // See: https://github.com/yarnpkg/yarn/issues/2935#issuecomment-355292633
   const envOverride = {
-    npm_config_registry: getCorrectRegistry()
+    npm_config_registry: getCorrectRegistry(),
   };
   let result = await spawn("npm", ["profile", "get", "--json"], {
-    env: Object.assign({}, process.env, envOverride)
+    env: Object.assign({}, process.env, envOverride),
   });
+  if (result.code !== 0) {
+    error(
+      "error while checking if token is required",
+      result.stderr.toString().trim() || result.stdout.toString().trim()
+    );
+    return false;
+  }
   let json = jsonParse(result.stdout.toString());
   if (json.error || !json.tfa || !json.tfa.mode) {
     return false;
@@ -86,16 +100,16 @@ export function getPackageInfo(packageJson: PackageJSON) {
       packageJson.name,
       "--registry",
       getCorrectRegistry(packageJson),
-      "--json"
+      "--json",
     ]);
 
     // Github package registry returns empty string when calling npm info
-    // for a non-existant package instead of a E404
+    // for a non-existent package instead of a E404
     if (result.stdout.toString() === "") {
       return {
         error: {
-          code: "E404"
-        }
+          code: "E404",
+        },
       };
     }
     return jsonParse(result.stdout.toString());
@@ -155,7 +169,7 @@ const isOtpError = (error: any) => {
 // the call being wrapped in the npm request limit and causing the publishes to potentially never run
 async function internalPublish(
   pkgName: string,
-  opts: { cwd: string; access?: string; tag: string },
+  opts: PublishOptions,
   twoFactorState: TwoFactorState
 ): Promise<{ published: boolean }> {
   let publishTool = await getPublishTool(opts.cwd);
@@ -184,7 +198,7 @@ async function internalPublish(
   // Due to a super annoying issue in yarn, we have to manually override this env variable
   // See: https://github.com/yarnpkg/yarn/issues/2935#issuecomment-355292633
   const envOverride = {
-    npm_config_registry: getCorrectRegistry()
+    npm_config_registry: getCorrectRegistry(),
   };
   let { code, stdout, stderr } =
     publishTool.name === "yarn"
@@ -237,7 +251,8 @@ async function internalPublish(
         json.error.detail ? "\n" + json.error.detail : ""
       );
     }
-    error(stderr);
+
+    error(stderr.toString() || stdout.toString());
     return { published: false };
   }
 
@@ -246,7 +261,7 @@ async function internalPublish(
 
 export function publish(
   pkgName: string,
-  opts: { cwd: string; access?: string; tag: string },
+  opts: PublishOptions,
   twoFactorState: TwoFactorState
 ): Promise<{ published: boolean }> {
   // If there are many packages to be published, it's better to limit the
