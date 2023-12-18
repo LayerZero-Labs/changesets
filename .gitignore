@@ -4,3 +4,12 @@ scratchings.js
 dist/
 .env
 coverage/
+
+# https://yarnpkg.com/getting-started/qa
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
