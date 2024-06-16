@@ -19,12 +19,17 @@ this branch merged:
 
 Please `Sync fork` the main branch with the upstream and `git rebase origin/main` on `gx/main` branch if you want to catch up the upstream.
 
+### Publish packages from the command line
+
 ```
-cd packages/cli
-yarn pack
-tar -xzOf changesets-cli-*.tgz package/package.json | jq '.name'
-npm --no-workspaces publish ./changesets-cli*.tgz
+yarn workspace @changesets/cli pack
+tar -zxOf packages/cli/changesets-cli-*.tgz package/package.json | jq '.name'
+npm --no-workspaces publish packages/cli/changesets-cli-*.tgz
 ```
+
+### Publish packages from the Github workflow
+
+It will automatically publish packages with changesets when pushing changes on the `gx/main` branch, the workflow is implemented in `./github/workflows/publish-packages.yml`.
 
 [![View changelog](https://img.shields.io/badge/changelogs.xyz-Explore%20Changelog-brightgreen)](https://changelogs.xyz/@changesets/cli)
 
