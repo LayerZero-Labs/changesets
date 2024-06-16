@@ -11,19 +11,20 @@
 ## How to publish the `@layerzerolabs/changesets-cli`
 
 this branch merged:
+
 - `feat/support-all-popular-package-managers`
 - `feat/hooks-for-publish-packages-with-layerzerolabs`
 - `feat/update-yarn-configuration`
 - `fix/null-pre-version`
 
 Please `Sync fork` the main branch with the upstream and `git rebase origin/main` on `gx/main` branch if you want to catch up the upstream.
+
 ```
 cd packages/cli
 yarn pack
 tar -xzOf changesets-cli-*.tgz package/package.json | jq '.name'
 npm --no-workspaces publish ./changesets-cli*.tgz
 ```
-
 
 [![View changelog](https://img.shields.io/badge/changelogs.xyz-Explore%20Changelog-brightgreen)](https://changelogs.xyz/@changesets/cli)
 
