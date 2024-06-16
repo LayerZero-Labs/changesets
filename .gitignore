@@ -4,3 +4,5 @@ scratchings.js
 dist/
 .env
 coverage/
+
+.yarn/
