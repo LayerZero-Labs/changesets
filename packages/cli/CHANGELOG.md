@@ -1,5 +1,13 @@
 # @changesets/cli
 
+## 2.27.6
+
+### Patch Changes
+
+- [`2c7a500`](https://github.com/changesets/changesets/commit/2c7a500da550256c89cdf8b4644936f065f4ed00) Thanks [@zouguangxian](https://github.com/zouguangxian)! - support all popular package managers.
+  publish @changesets/cli as @layerzerolabs/changesets-cli.
+  allow missing version field for private packages.
+
 ## 2.27.5
 
 ### Patch Changes
