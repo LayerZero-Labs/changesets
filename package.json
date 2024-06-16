@@ -16,7 +16,7 @@
     "changeset": "packages/cli/bin.js",
     "check-all": "yarn test && yarn lint && yarn types:check",
     "version-packages": "changeset version && yarn prettier",
-    "release-packages": "yarn workspace @changesets/cli pack && npm --no-workspaces publish packages/cli/changesets-cli-*.tgz",
+    "release-packages": "yarn build && yarn workspace @changesets/cli pack && npm --version && yarn config set registry https://registry.npmjs.org/ && npm config list -l && set && npm --no-workspaces publish packages/cli/changesets-cli-*.tgz",
     "release": "yarn build && changeset publish"
   },
   "repository": {
