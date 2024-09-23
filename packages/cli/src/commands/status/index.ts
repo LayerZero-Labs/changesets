@@ -1,8 +1,6 @@
-import chalk from "chalk";
+import pc from "picocolors";
 import fs from "fs-extra";
 import path from "path";
-import table from "tty-table";
-
 import getReleasePlan from "@changesets/get-release-plan";
 import { error, info, log, warn } from "@changesets/logger";
 import {
@@ -74,12 +72,12 @@ export default async function status(
 function SimplePrint(type: VersionType, releases: Array<Release>) {
   const packages = releases.filter((r) => r.type === type);
   if (packages.length) {
-    info(chalk`Packages to be bumped at {green ${type}}:\n`);
+    info(`Packages to be bumped at ${pc.green(type)}:\n`);
 
     const pkgs = packages.map(({ name }) => `- ${name}`).join("\n");
-    log(chalk.green(pkgs));
+    log(pc.green(pkgs));
   } else {
-    info(chalk`{red NO} packages to be bumped at {green ${type}}`);
+    info(`${pc.green("NO")} packages to be bumped at ${pc.green(type)}`);
   }
 }
 
@@ -89,29 +87,19 @@ function verbosePrint(
 ) {
   const packages = releases.filter((r) => r.type === type);
   if (packages.length) {
-    info(chalk`Packages to be bumped at {green ${type}}`);
+    info(`Packages to be bumped at ${pc.green(type)}`);
 
-    const columns = packages.map(
-      ({ name, newVersion: version, changesets }) => [
-        chalk.green(name),
-        version,
-        changesets.map((c) => chalk.blue(` .changeset/${c}.md`)).join(" +"),
-      ]
-    );
-
-    const t1 = table(
-      [
-        { value: "Package Name", width: 20 },
-        { value: "New Version", width: 20 },
-        { value: "Related Changeset Summaries", width: 70 },
-      ],
-      columns,
-      { paddingLeft: 1, paddingRight: 0, headerAlign: "center", align: "left" }
-    );
-    log(t1.render() + "\n");
+    for (const { name, newVersion: version, changesets } of packages) {
+      log(`- ${pc.green(name)} ${pc.cyan(version)}`);
+      for (const c of changesets) {
+        log(`  - ${pc.blue(`.changeset/${c}.md`)}`);
+      }
+    }
   } else {
     info(
-      chalk`Running release would release {red NO} packages as a {green ${type}}`
+      `Running release would release ${pc.red("NO")} packages as a ${pc.green(
+        type
+      )}`
     );
   }
 }
